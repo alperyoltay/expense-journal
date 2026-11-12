@@ -1,50 +1,114 @@
-# Welcome to your Expo app 👋
+# Expense Journal (Harcamalarım)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Günlük gelir ve giderlerini not defteri gibi tutabileceğin, Expo (React Native) ile yazılmış bir mobil uygulama.
+A notebook-style daily income and expense tracker built with Expo (React Native).
 
-## Get started
+**Diller / Languages:** Türkçe, English (Ayarlar → Dil / Settings → Language)
 
-1. Install dependencies
+- [Türkçe Kurulum](#türkçe-kurulum)
+- [English Setup](#english-setup)
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## Türkçe Kurulum
 
-   ```bash
-   npx expo start
-   ```
+### Gereksinimler
+- [Node.js](https://nodejs.org/) 20 veya üzeri
+- npm (Node.js ile birlikte gelir)
+- Telefonda test için: [Expo Go](https://expo.dev/go) (Android / iOS)
+- İsteğe bağlı: Android Studio (emülatör) veya Xcode (iOS simülatörü, sadece macOS)
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Projeyi indir
 ```bash
-npm run reset-project
+git clone https://github.com/lprvy/expense-journal.git
+cd expense-journal
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Bağımlılıkları kur
+```bash
+npm install
+```
 
-## Learn more
+### 3. Uygulamayı başlat
+```bash
+npx expo start
+```
+Terminalde çıkan QR kodu telefondaki **Expo Go** ile okut. Ya da:
+- `a` tuşu → Android emülatöründe açar
+- `i` tuşu → iOS simülatöründe açar (macOS)
+- `w` tuşu → tarayıcıda açar
 
-To learn more about developing your project with Expo, look at the following resources:
+### 4. Dil seçimi
+Uygulama ilk açılışta telefonun diline göre Türkçe ya da İngilizce başlar. Değiştirmek için alttaki menüden **Ayarlar** (dişli simgesi) → **Dil** bölümünden seçim yap. Seçim kaydedilir.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 5. APK oluşturma (isteğe bağlı)
+```bash
+npm install -g eas-cli
+eas login
+eas build -p android --profile preview
+```
+Derleme bitince EAS bir indirme bağlantısı verir.
 
-## Join the community
+### Kullanım
+- Miktarı ve açıklamayı yaz, **+ GELİR** veya **- GİDER** butonuna bas.
+- Açıklamaya `#market` gibi etiket ekleyerek harcamalarını grupla.
+- Not alanına doğrudan `#gider 150 #market ekmek` biçiminde de yazabilirsin.
+- Özet, geçmiş aylar ve ayarlar sayfalarına alttaki menüden ya da sağa/sola kaydırarak geç.
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## English Setup
+
+### Requirements
+- [Node.js](https://nodejs.org/) 20 or newer
+- npm (comes with Node.js)
+- To test on a phone: [Expo Go](https://expo.dev/go) (Android / iOS)
+- Optional: Android Studio (emulator) or Xcode (iOS simulator, macOS only)
+
+### 1. Clone the project
+```bash
+git clone https://github.com/lprvy/expense-journal.git
+cd expense-journal
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Start the app
+```bash
+npx expo start
+```
+Scan the QR code shown in the terminal with **Expo Go** on your phone. Or press:
+- `a` to open on an Android emulator
+- `i` to open on the iOS simulator (macOS)
+- `w` to open in the browser
+
+### 4. Choosing a language
+On first launch the app picks Turkish or English based on your phone's language. To change it, open **Settings** (gear icon) from the bottom bar and pick an option under **Language**. Your choice is saved.
+
+### 5. Building an APK (optional)
+```bash
+npm install -g eas-cli
+eas login
+eas build -p android --profile preview
+```
+When the build finishes, EAS gives you a download link.
+
+### Usage
+- Enter an amount and a description, then tap **+ INCOME** or **- EXPENSE**.
+- Add tags like `#market` to the description to group your spending.
+- You can also type straight into the note area, e.g. `#gider 150 #market bread` (`#gelir` = income, `#gider` = expense).
+- Switch between the summary, past months and settings pages from the bottom bar or by swiping.
+
+---
+
+## Proje Yapısı / Project Structure
+```
+app/                 Ekranlar / Screens (expo-router)
+src/db/              Not ve ayar kayıtları / Notes & settings storage
+src/i18n/            Çeviriler / Translations (tr, en)
+src/utils/           Ayrıştırıcı ve sabitler / Parser & constants
+app.json             Expo yapılandırması / Expo config
+```
