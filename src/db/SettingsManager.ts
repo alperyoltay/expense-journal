@@ -26,6 +26,17 @@ export const getLabels = async () => {
   return settings.labels || DEFAULT_LABELS;
 };
 
+export const saveLanguage = async (language: string) => {
+  const settings = await getSettings();
+  settings.language = language;
+  await saveSettings(settings);
+};
+
+export const getLanguage = async (): Promise<string | undefined> => {
+  const settings = await getSettings();
+  return settings.language;
+};
+
 const getSettings = async () => {
   try {
     const info = await FileSystem.getInfoAsync(SETTINGS_FILE);

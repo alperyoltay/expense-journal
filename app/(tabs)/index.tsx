@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList, View, Dimensions, Modal } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { UI_COLORS, TransactionType, THEME_PALETTES } from '@/src/utils/constants';
+import { UI_COLORS, TransactionType, THEME_PALETTES, PATTERNS } from '@/src/utils/constants';
+import { useLanguage } from '@/src/i18n/LanguageContext';
+import { LANGUAGES } from '@/src/i18n/translations';
 import { saveNote, getNoteByDate, appendNote, TransactionRecord, getTransactionsByMonth, clearAllData, getAllTransactions } from '@/src/db/DB';
 import { saveThemeColor, getThemeColor, getLabels, saveLabels } from '@/src/db/SettingsManager';
 import { parseTransactions } from '@/src/utils/parser';
@@ -27,6 +29,7 @@ interface MonthSummary {
 }
 
 export default function MasterPagerScreen() {
+  const { t, language, setLanguage } = useLanguage();
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [accentColor, setAccentColor] = useState(UI_COLORS.primary);
@@ -49,7 +52,8 @@ export default function MasterPagerScreen() {
   const [tagSummaryData, setTagSummaryData] = useState<TagSummary[]>([]);
   const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
   const [allHistory, setAllHistory] = useState<MonthSummary[]>([]);
-  const displayMonth = new Date().toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+  const displayMonth = new Date().toLocaleString(t.locale, { month: 'long', year: 'numeric' });
+  const tagLabel = (tag: string) => (tag === '#diğer' ? t.otherTag : tag);
 
   const loadData = useCallback(async () => {
     const [color, storedLabels] = await Promise.all([getThemeColor(), getLabels()]);
@@ -116,7 +120,7 @@ export default function MasterPagerScreen() {
 
     const formattedHistory: MonthSummary[] = Object.keys(monthsMap).sort((a, b) => b.localeCompare(a)).map(mStr => {
       const [y, m] = mStr.split('-');
-      const dMonth = new Date(parseInt(y, 10), parseInt(m, 10) - 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+      const dMonth = new Date(parseInt(y, 10), parseInt(m, 10) - 1).toLocaleString(t.locale, { month: 'long', year: 'numeric' });
       
       const tags = Object.keys(monthsMap[mStr].tags).map(tag => ({
         tag,
@@ -136,14 +140,14 @@ export default function MasterPagerScreen() {
     });
 
     setAllHistory(formattedHistory);
-  }, [todayFull]);
+  }, [todayFull, t.locale]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     if (isWipeModalVisible && wipeCountdown > 0) {
       timer = setTimeout(() => setWipeCountdown(prev => prev - 1), 1000);
     }
@@ -165,7 +169,7 @@ export default function MasterPagerScreen() {
 
   const handleManualAdd = async (type: 'gelir' | 'gider') => {
     if (!tempAmount.trim()) {
-        Alert.alert('Eksik Bilgi', 'Lütfen miktar giriniz.');
+        Alert.alert(t.missingInfoTitle, t.missingAmount);
         return;
     }
     
@@ -207,6 +211,42 @@ export default function MasterPagerScreen() {
     setAccentColor(color);
   };
 
+  const handleDeleteTx = (index: number) => {
+    Alert.alert(
+      t.deleteTxTitle,
+      t.deleteTxMessage,
+      [
+        { text: t.cancel, style: "cancel" },
+        {
+          text: t.delete,
+          style: "destructive",
+          onPress: async () => {
+            const matches = [...fullNote.matchAll(PATTERNS.TRANSACTION_REGEX)];
+            if (index >= 0 && index < matches.length) {
+              const match = matches[index];
+              const start = match.index!;
+              const end = start + match[0].length;
+              
+              let finalEnd = end;
+              if (fullNote[finalEnd] === '\n') {
+                finalEnd += 1;
+              }
+              
+              const part1 = fullNote.substring(0, start);
+              const part2 = fullNote.substring(finalEnd);
+              let combined = part1 + part2;
+              combined = combined.replace(/\n{3,}/g, '\n\n').trim();
+              
+              setFullNote(combined);
+              await saveNote(combined, todayFull);
+              loadData();
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const scrollTo = (index: number) => {
     scrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
     setActiveIndex(index);
@@ -229,31 +269,33 @@ export default function MasterPagerScreen() {
         scrollEventThrottle={16}
         style={{ flex: 1 }}
       >
-        {/* PAGE 1: JOURNAL */}
         <ThemedView style={[styles.page, { width: SCREEN_WIDTH }]}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <ThemedView style={styles.header}>
-              <ThemedText type="title">Günlük ({displayDate})</ThemedText>
+              <ThemedText type="title">{t.dailyTitle} ({displayDate})</ThemedText>
             </ThemedView>
 
             <ThemedView style={styles.listSection}>
               <FlatList
                 data={transactions}
                 keyExtractor={(_, i) => i.toString()}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                   <ThemedView style={styles.txRow}>
                     <ThemedView style={{ flex: 1 }}>
                       <ThemedText style={styles.txDesc}>
                         {item.time && <ThemedText style={[styles.timeTag, { color: accentColor }]}>{item.time} </ThemedText>}
-                        {item.description || 'İşlem'}
+                        {item.description || t.transaction}
                       </ThemedText>
                     </ThemedView>
                     <ThemedText style={[styles.txType, item.type === 'gelir' ? styles.income : styles.expense]}>
-                      {item.type === 'gelir' ? '+' : '-'} {item.amount} TL
+                      {item.type === 'gelir' ? '+' : '-'} {item.amount} {t.currency}
                     </ThemedText>
+                    <TouchableOpacity onPress={() => handleDeleteTx(index)} style={{ marginLeft: 15, padding: 5 }}>
+                      <IconSymbol name="trash" size={20} color={UI_COLORS.error} />
+                    </TouchableOpacity>
                   </ThemedView>
                 )}
-                ListEmptyComponent={<ThemedText style={styles.emptyText}>Henüz işlem yok.</ThemedText>}
+                ListEmptyComponent={<ThemedText style={styles.emptyText}>{t.noTransactions}</ThemedText>}
               />
             </ThemedView>
 
@@ -277,7 +319,7 @@ export default function MasterPagerScreen() {
                 />
                 <TextInput 
                   style={[styles.input, styles.descInput]} 
-                  placeholder="Açıklama #etiket" 
+                  placeholder={t.descriptionPlaceholder} 
                   placeholderTextColor={UI_COLORS.textSecondary} 
                   value={tempDesc} 
                   onChangeText={setTempDesc} 
@@ -285,8 +327,8 @@ export default function MasterPagerScreen() {
               </ThemedView>
 
               <ThemedView style={styles.buttonRow}>
-                <TouchableOpacity style={[styles.actionButton, { backgroundColor: UI_COLORS.success }]} onPress={() => handleManualAdd('gelir')}><ThemedText style={styles.buttonText}>+ GELİR</ThemedText></TouchableOpacity>
-                <TouchableOpacity style={[styles.actionButton, { backgroundColor: UI_COLORS.error }]} onPress={() => handleManualAdd('gider')}><ThemedText style={styles.buttonText}>- GİDER</ThemedText></TouchableOpacity>
+                <TouchableOpacity style={[styles.actionButton, { backgroundColor: UI_COLORS.success }]} onPress={() => handleManualAdd('gelir')}><ThemedText style={styles.buttonText}>{t.addIncome}</ThemedText></TouchableOpacity>
+                <TouchableOpacity style={[styles.actionButton, { backgroundColor: UI_COLORS.error }]} onPress={() => handleManualAdd('gider')}><ThemedText style={styles.buttonText}>{t.addExpense}</ThemedText></TouchableOpacity>
               </ThemedView>
             </ThemedView>
 
@@ -296,45 +338,43 @@ export default function MasterPagerScreen() {
           </KeyboardAvoidingView>
         </ThemedView>
 
-        {/* PAGE 2: SUMMARY */}
         <ThemedView style={[styles.page, { width: SCREEN_WIDTH }]}>
           <ThemedView style={styles.header}><ThemedText type="title">{displayMonth}</ThemedText></ThemedView>
           <ThemedView style={styles.cardContainer}>
             <ThemedView style={styles.balanceCard}>
-              <ThemedText style={styles.cardLabel}>Net Bakiye</ThemedText>
-              <ThemedText style={[styles.cardValue, summary.balance < 0 ? styles.expenseText : styles.incomeText]}>{summary.balance.toLocaleString('tr-TR')} ₺</ThemedText>
+              <ThemedText style={styles.cardLabel}>{t.netBalance}</ThemedText>
+              <ThemedText style={[styles.cardValue, summary.balance < 0 ? styles.expenseText : styles.incomeText]}>{summary.balance.toLocaleString(t.locale)} ₺</ThemedText>
             </ThemedView>
             <ThemedView style={styles.statsRow}>
-              <ThemedView style={[styles.statItem, styles.incomeCard]}><ThemedText style={styles.statLabel}>Gelir</ThemedText><ThemedText style={styles.statValue}>{summary.income} ₺</ThemedText></ThemedView>
-              <ThemedView style={[styles.statItem, styles.expenseCard]}><ThemedText style={styles.statLabel}>Gider</ThemedText><ThemedText style={styles.statValue}>{summary.expense} ₺</ThemedText></ThemedView>
+              <ThemedView style={[styles.statItem, styles.incomeCard]}><ThemedText style={styles.statLabel}>{t.income}</ThemedText><ThemedText style={styles.statValue}>{summary.income} ₺</ThemedText></ThemedView>
+              <ThemedView style={[styles.statItem, styles.expenseCard]}><ThemedText style={styles.statLabel}>{t.expense}</ThemedText><ThemedText style={styles.statValue}>{summary.expense} ₺</ThemedText></ThemedView>
             </ThemedView>
           </ThemedView>
-          <ThemedText type="subtitle" style={[styles.listHeader, { color: accentColor }]}>Etiketlere Göre Dağılım</ThemedText>
+          <ThemedText type="subtitle" style={[styles.listHeader, { color: accentColor }]}>{t.byTags}</ThemedText>
           <FlatList
             data={tagSummaryData}
             keyExtractor={(item) => item.tag}
             renderItem={({ item }) => (
               <ThemedView style={styles.tagSummaryCard}>
                 <ThemedView style={styles.tagHeaderRow}>
-                  <ThemedText style={[styles.tagSummaryTitle, { color: accentColor }]}>{item.tag}</ThemedText>
+                  <ThemedText style={[styles.tagSummaryTitle, { color: accentColor }]}>{tagLabel(item.tag)}</ThemedText>
                   <ThemedText style={[styles.tagSummaryBalance, item.balance < 0 ? styles.expenseText : styles.incomeText]}>
-                    Net: {item.balance > 0 ? '+' : ''}{item.balance} ₺
+                    {t.net}: {item.balance > 0 ? '+' : ''}{item.balance} ₺
                   </ThemedText>
                 </ThemedView>
                 <ThemedView style={styles.tagStatsRow}>
-                  <ThemedText style={styles.incomeText}>Gelir: +{item.income} ₺</ThemedText>
-                  <ThemedText style={styles.expenseText}>Gider: -{item.expense} ₺</ThemedText>
+                  <ThemedText style={styles.incomeText}>{t.income}: +{item.income} ₺</ThemedText>
+                  <ThemedText style={styles.expenseText}>{t.expense}: -{item.expense} ₺</ThemedText>
                 </ThemedView>
               </ThemedView>
             )}
             contentContainerStyle={{ paddingBottom: 150 }}
-            ListEmptyComponent={<ThemedText style={styles.emptyText}>Henüz işlem yok.</ThemedText>}
+            ListEmptyComponent={<ThemedText style={styles.emptyText}>{t.noTransactions}</ThemedText>}
           />
         </ThemedView>
 
-        {/* PAGE 3: HISTORY */}
         <ThemedView style={[styles.page, { width: SCREEN_WIDTH }]}>
-          <ThemedView style={styles.header}><ThemedText type="title">Geçmiş Aylar</ThemedText></ThemedView>
+          <ThemedView style={styles.header}><ThemedText type="title">{t.pastMonths}</ThemedText></ThemedView>
           <FlatList
             data={allHistory}
             keyExtractor={item => item.monthStr}
@@ -345,33 +385,32 @@ export default function MasterPagerScreen() {
                 <ThemedView style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
                   <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: accentColor, textTransform: 'capitalize' }}>{item.displayMonth}</ThemedText>
                   <ThemedText style={[styles.cardValue, { fontSize: 20 }, item.balance < 0 ? styles.expenseText : styles.incomeText]}>
-                    {item.balance > 0 ? '+' : ''}{item.balance.toLocaleString('tr-TR')} ₺
+                    {item.balance > 0 ? '+' : ''}{item.balance.toLocaleString(t.locale)} ₺
                   </ThemedText>
                 </ThemedView>
                 <ThemedView style={{ flexDirection: 'row', gap: 15, marginBottom: 15 }}>
-                  <ThemedText style={styles.incomeText}>Gelir: {item.income.toLocaleString('tr-TR')} ₺</ThemedText>
-                  <ThemedText style={styles.expenseText}>Gider: {item.expense.toLocaleString('tr-TR')} ₺</ThemedText>
+                  <ThemedText style={styles.incomeText}>{t.income}: {item.income.toLocaleString(t.locale)} ₺</ThemedText>
+                  <ThemedText style={styles.expenseText}>{t.expense}: {item.expense.toLocaleString(t.locale)} ₺</ThemedText>
                 </ThemedView>
                 
-                {item.tags.map(t => (
-                  <ThemedView key={t.tag} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 0.5, borderTopColor: '#333' }}>
-                    <ThemedText style={{ fontWeight: '500', color: '#CCC' }}>{t.tag}</ThemedText>
-                    <ThemedText style={t.balance < 0 ? styles.expenseText : styles.incomeText}>
-                      {t.balance > 0 ? '+' : ''}{t.balance} ₺
+                {item.tags.map(tg => (
+                  <ThemedView key={tg.tag} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 0.5, borderTopColor: '#333' }}>
+                    <ThemedText style={{ fontWeight: '500', color: '#CCC' }}>{tagLabel(tg.tag)}</ThemedText>
+                    <ThemedText style={tg.balance < 0 ? styles.expenseText : styles.incomeText}>
+                      {tg.balance > 0 ? '+' : ''}{tg.balance} ₺
                     </ThemedText>
                   </ThemedView>
                 ))}
               </ThemedView>
             )}
-            ListEmptyComponent={<ThemedText style={styles.emptyText}>Geçmiş veri bulunamadı.</ThemedText>}
+            ListEmptyComponent={<ThemedText style={styles.emptyText}>{t.noHistory}</ThemedText>}
           />
         </ThemedView>
 
-        {/* PAGE 4: MENU */}
         <ThemedView style={[styles.page, { width: SCREEN_WIDTH }]}>
-          <ThemedView style={styles.header}><ThemedText type="title">Ayarlar</ThemedText></ThemedView>
+          <ThemedView style={styles.header}><ThemedText type="title">{t.settings}</ThemedText></ThemedView>
           <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled={true}>
-            <ThemedText style={styles.sectionTitle}>Renk Paleti</ThemedText>
+            <ThemedText style={styles.sectionTitle}>{t.colorPalette}</ThemedText>
             <FlatList
               data={THEME_PALETTES}
               horizontal
@@ -389,31 +428,43 @@ export default function MasterPagerScreen() {
               )}
             />
             
-            <ThemedText style={styles.sectionTitle}>Etiketler</ThemedText>
+            <ThemedText style={styles.sectionTitle}>{t.language}</ThemedText>
+            <View style={styles.languageRow}>
+              {LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[styles.languageButton, { borderColor: language === lang.code ? accentColor : '#333' }]}
+                  onPress={() => setLanguage(lang.code)}
+                >
+                  <ThemedText style={{ color: language === lang.code ? accentColor : '#EEE', fontWeight: 'bold' }}>{lang.label}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <ThemedText style={styles.sectionTitle}>{t.labels}</ThemedText>
             <TouchableOpacity style={styles.menuPageItem} onPress={() => setIsLabelModalVisible(true)}>
                 <IconSymbol name="plus" size={24} color={accentColor} />
-                <ThemedText style={styles.menuPageText}>Etiketleri Yönet</ThemedText>
+                <ThemedText style={styles.menuPageText}>{t.manageLabels}</ThemedText>
             </TouchableOpacity>
 
             <View style={[styles.previewCard, { borderColor: accentColor }]}>
-                <ThemedText style={{ color: UI_COLORS.textSecondary, fontSize: 12 }}>Panel Görünümü</ThemedText>
-                <ThemedText style={{ color: accentColor, fontSize: 24, fontWeight: 'bold', marginTop: 5 }}>Harcamalarım Legacy</ThemedText>
+                <ThemedText style={{ color: UI_COLORS.textSecondary, fontSize: 12 }}>{t.panelPreview}</ThemedText>
+                <ThemedText style={{ color: accentColor, fontSize: 24, fontWeight: 'bold', marginTop: 5 }}>{t.appName}</ThemedText>
             </View>
 
             <TouchableOpacity style={[styles.menuPageItem, { borderColor: UI_COLORS.error, marginTop: 20 }]} onPress={openWipeModal}>
                 <IconSymbol name="trash" size={24} color={UI_COLORS.error} />
-                <ThemedText style={[styles.menuPageText, { color: UI_COLORS.error }]}>Bütün Bakiyeyi Sil</ThemedText>
+                <ThemedText style={[styles.menuPageText, { color: UI_COLORS.error }]}>{t.wipeAll}</ThemedText>
             </TouchableOpacity>
           </ScrollView>
         </ThemedView>
       </ScrollView>
 
-      {/* LABEL MANAGEMENT MODAL */}
       <Modal visible={isLabelModalVisible} animationType="slide" transparent>
         <ThemedView style={styles.modalOverlay}>
             <ThemedView style={styles.modalContent}>
                 <ThemedView style={styles.modalHeader}>
-                    <ThemedText type="subtitle">Etiketleri Yönet</ThemedText>
+                    <ThemedText type="subtitle">{t.manageLabels}</ThemedText>
                     <TouchableOpacity onPress={() => setIsLabelModalVisible(false)}>
                         <IconSymbol name="calendar" size={24} color={accentColor} /> 
                     </TouchableOpacity>
@@ -422,13 +473,13 @@ export default function MasterPagerScreen() {
                 <ThemedView style={styles.addLabelRow}>
                     <TextInput 
                         style={[styles.input, { flex: 1, marginBottom: 0 }]} 
-                        placeholder="Yeni etiket..." 
+                        placeholder={t.newLabelPlaceholder} 
                         placeholderTextColor="#666"
                         value={newLabelName}
                         onChangeText={setNewLabelName}
                     />
                     <TouchableOpacity style={[styles.addBtn, { backgroundColor: accentColor }]} onPress={addNewLabel}>
-                        <ThemedText style={{ fontWeight: 'bold' }}>EKLE</ThemedText>
+                        <ThemedText style={{ fontWeight: 'bold' }}>{t.add}</ThemedText>
                     </TouchableOpacity>
                 </ThemedView>
 
@@ -447,19 +498,18 @@ export default function MasterPagerScreen() {
                 />
                 
                 <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setIsLabelModalVisible(false)}>
-                    <ThemedText style={styles.buttonText}>KAPAT</ThemedText>
+                    <ThemedText style={styles.buttonText}>{t.close}</ThemedText>
                 </TouchableOpacity>
             </ThemedView>
         </ThemedView>
       </Modal>
 
-      {/* WIPE CONFIRMATION MODAL */}
       <Modal visible={isWipeModalVisible} animationType="fade" transparent>
         <ThemedView style={styles.wipeModalOverlay}>
           <ThemedView style={styles.wipeModalContent}>
-            <ThemedText type="subtitle" style={{ color: UI_COLORS.error, textAlign: 'center', marginBottom: 20 }}>DİKKAT</ThemedText>
+            <ThemedText type="subtitle" style={{ color: UI_COLORS.error, textAlign: 'center', marginBottom: 20 }}>{t.warning}</ThemedText>
             <ThemedText style={{ textAlign: 'center', fontSize: 18, marginBottom: 20 }}>
-              Silmek istiyon mu cidden aq
+              {t.wipeConfirm}
             </ThemedText>
             
             {wipeCountdown > 0 ? (
@@ -469,10 +519,10 @@ export default function MasterPagerScreen() {
             ) : (
               <ThemedView style={{ flexDirection: 'row', gap: 15, justifyContent: 'center' }}>
                 <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#333' }]} onPress={() => setIsWipeModalVisible(false)}>
-                  <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>HAYIR</ThemedText>
+                  <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>{t.no}</ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.actionButton, { backgroundColor: UI_COLORS.error }]} onPress={confirmWipe}>
-                  <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>EVET</ThemedText>
+                  <ThemedText style={{ color: '#FFF', fontWeight: 'bold' }}>{t.yes}</ThemedText>
                 </TouchableOpacity>
               </ThemedView>
             )}
@@ -480,7 +530,6 @@ export default function MasterPagerScreen() {
         </ThemedView>
       </Modal>
 
-      {/* BOTTOM NAV BAR */}
       <ThemedView style={styles.bottomBar}>
         <TouchableOpacity style={styles.navItem} onPress={() => scrollTo(0)}>
           <IconSymbol name="pencil" size={28} color={activeIndex === 0 ? accentColor : "#666"} />
@@ -548,6 +597,8 @@ const styles = StyleSheet.create({
   activeDot: { position: 'absolute', bottom: -12, width: 4, height: 4, borderRadius: 2 },
   menuPageItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', borderRadius: 16, padding: 20, marginBottom: 12, gap: 15, borderWidth: 1, borderColor: '#222' },
   menuPageText: { color: '#EEE', fontSize: 16, fontWeight: '500' },
+  languageRow: { flexDirection: 'row', gap: 12, marginBottom: 25 },
+  languageButton: { flex: 1, backgroundColor: '#111', borderRadius: 16, paddingVertical: 14, alignItems: 'center', borderWidth: 2 },
   previewCard: { marginTop: 20, backgroundColor: '#1A1A1A', borderRadius: 20, padding: 20, borderWidth: 1, borderStyle: 'dotted' },
   
   tagSummaryCard: { backgroundColor: '#1A1A1A', borderRadius: 16, padding: 20, marginBottom: 12, borderWidth: 1, borderColor: '#222' },

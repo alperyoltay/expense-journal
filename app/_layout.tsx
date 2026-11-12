@@ -16,6 +16,19 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Updates from 'expo-updates';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useState } from 'react';
+import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
+
+function UpdateBanner() {
+  const { t } = useLanguage();
+  return (
+    <View style={styles.updateContainer}>
+      <Text style={styles.updateText}>{t.updateReady}</Text>
+      <TouchableOpacity style={styles.updateButton} onPress={() => Updates.reloadAsync()}>
+        <Text style={styles.updateButtonText}>{t.restart}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -47,22 +60,17 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-        
-        {isUpdateReady && (
-          <View style={styles.updateContainer}>
-            <Text style={styles.updateText}>Yeni güncelleme hazır!</Text>
-            <TouchableOpacity style={styles.updateButton} onPress={() => Updates.reloadAsync()}>
-              <Text style={styles.updateButtonText}>Yeniden Başlat</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ThemeProvider>
+      <LanguageProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          </Stack>
+          <StatusBar style="auto" />
+
+          {isUpdateReady && <UpdateBanner />}
+        </ThemeProvider>
+      </LanguageProvider>
     </GestureHandlerRootView>
   );
 }
