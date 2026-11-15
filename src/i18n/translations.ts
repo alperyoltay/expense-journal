@@ -7,7 +7,7 @@ export const LANGUAGES: { code: Language; label: string }[] = [
 
 const tr = {
   locale: 'tr-TR',
-  currency: 'TL',
+  currency: '₺',
   dailyTitle: 'Günlük',
   transaction: 'İşlem',
   noTransactions: 'Henüz işlem yok.',
@@ -51,7 +51,7 @@ export type Translation = typeof tr;
 
 const en: Translation = {
   locale: 'en-US',
-  currency: 'TL',
+  currency: '₺',
   dailyTitle: 'Daily',
   transaction: 'Transaction',
   noTransactions: 'No transactions yet.',

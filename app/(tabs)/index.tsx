@@ -8,6 +8,7 @@ import { LANGUAGES } from '@/src/i18n/translations';
 import { saveNote, getNoteByDate, appendNote, TransactionRecord, getTransactionsByMonth, clearAllData, getAllTransactions } from '@/src/db/DB';
 import { saveThemeColor, getThemeColor, getLabels, saveLabels } from '@/src/db/SettingsManager';
 import { parseTransactions } from '@/src/utils/parser';
+import { formatMoney } from '@/src/utils/format';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -30,6 +31,7 @@ interface MonthSummary {
 
 export default function MasterPagerScreen() {
   const { t, language, setLanguage } = useLanguage();
+  const money = (value: number, signed = false) => formatMoney(value, t.locale, t.currency, signed);
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [accentColor, setAccentColor] = useState(UI_COLORS.primary);
@@ -286,7 +288,7 @@ export default function MasterPagerScreen() {
                       </ThemedText>
                     </ThemedView>
                     <ThemedText style={[styles.txType, item.type === 'gelir' ? styles.income : styles.expense]}>
-                      {item.type === 'gelir' ? '+' : '-'} {item.amount} {t.currency}
+                      {money(item.type === 'gelir' ? item.amount : -item.amount, true)}
                     </ThemedText>
                     <TouchableOpacity onPress={() => handleDeleteTx(index)} style={{ marginLeft: 15, padding: 5 }}>
                       <IconSymbol name="trash" size={20} color={UI_COLORS.error} />
@@ -341,11 +343,11 @@ export default function MasterPagerScreen() {
           <ThemedView style={styles.cardContainer}>
             <ThemedView style={styles.balanceCard}>
               <ThemedText style={styles.cardLabel}>{t.netBalance}</ThemedText>
-              <ThemedText style={[styles.cardValue, summary.balance < 0 ? styles.expenseText : styles.incomeText]}>{summary.balance.toLocaleString(t.locale)} ₺</ThemedText>
+              <ThemedText style={[styles.cardValue, summary.balance < 0 ? styles.expenseText : styles.incomeText]}>{money(summary.balance)}</ThemedText>
             </ThemedView>
             <ThemedView style={styles.statsRow}>
-              <ThemedView style={[styles.statItem, styles.incomeCard]}><ThemedText style={styles.statLabel}>{t.income}</ThemedText><ThemedText style={styles.statValue}>{summary.income} ₺</ThemedText></ThemedView>
-              <ThemedView style={[styles.statItem, styles.expenseCard]}><ThemedText style={styles.statLabel}>{t.expense}</ThemedText><ThemedText style={styles.statValue}>{summary.expense} ₺</ThemedText></ThemedView>
+              <ThemedView style={[styles.statItem, styles.incomeCard]}><ThemedText style={styles.statLabel}>{t.income}</ThemedText><ThemedText style={styles.statValue}>{money(summary.income)}</ThemedText></ThemedView>
+              <ThemedView style={[styles.statItem, styles.expenseCard]}><ThemedText style={styles.statLabel}>{t.expense}</ThemedText><ThemedText style={styles.statValue}>{money(summary.expense)}</ThemedText></ThemedView>
             </ThemedView>
           </ThemedView>
           <ThemedText type="subtitle" style={[styles.listHeader, { color: accentColor }]}>{t.byTags}</ThemedText>
@@ -357,12 +359,12 @@ export default function MasterPagerScreen() {
                 <ThemedView style={styles.tagHeaderRow}>
                   <ThemedText style={[styles.tagSummaryTitle, { color: accentColor }]}>{tagLabel(item.tag)}</ThemedText>
                   <ThemedText style={[styles.tagSummaryBalance, item.balance < 0 ? styles.expenseText : styles.incomeText]}>
-                    {t.net}: {item.balance > 0 ? '+' : ''}{item.balance} ₺
+                    {t.net}: {money(item.balance, true)}
                   </ThemedText>
                 </ThemedView>
                 <ThemedView style={styles.tagStatsRow}>
-                  <ThemedText style={styles.incomeText}>{t.income}: +{item.income} ₺</ThemedText>
-                  <ThemedText style={styles.expenseText}>{t.expense}: -{item.expense} ₺</ThemedText>
+                  <ThemedText style={styles.incomeText}>{t.income}: {money(item.income, true)}</ThemedText>
+                  <ThemedText style={styles.expenseText}>{t.expense}: {money(-item.expense)}</ThemedText>
                 </ThemedView>
               </ThemedView>
             )}
@@ -383,19 +385,19 @@ export default function MasterPagerScreen() {
                 <ThemedView style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
                   <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: accentColor, textTransform: 'capitalize' }}>{item.displayMonth}</ThemedText>
                   <ThemedText style={[styles.cardValue, { fontSize: 20 }, item.balance < 0 ? styles.expenseText : styles.incomeText]}>
-                    {item.balance > 0 ? '+' : ''}{item.balance.toLocaleString(t.locale)} ₺
+                    {money(item.balance, true)}
                   </ThemedText>
                 </ThemedView>
                 <ThemedView style={{ flexDirection: 'row', gap: 15, marginBottom: 15 }}>
-                  <ThemedText style={styles.incomeText}>{t.income}: {item.income.toLocaleString(t.locale)} ₺</ThemedText>
-                  <ThemedText style={styles.expenseText}>{t.expense}: {item.expense.toLocaleString(t.locale)} ₺</ThemedText>
+                  <ThemedText style={styles.incomeText}>{t.income}: {money(item.income)}</ThemedText>
+                  <ThemedText style={styles.expenseText}>{t.expense}: {money(item.expense)}</ThemedText>
                 </ThemedView>
                 
                 {item.tags.map(tg => (
                   <ThemedView key={tg.tag} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 0.5, borderTopColor: '#333' }}>
                     <ThemedText style={{ fontWeight: '500', color: '#CCC' }}>{tagLabel(tg.tag)}</ThemedText>
                     <ThemedText style={tg.balance < 0 ? styles.expenseText : styles.incomeText}>
-                      {tg.balance > 0 ? '+' : ''}{tg.balance} ₺
+                      {money(tg.balance, true)}
                     </ThemedText>
                   </ThemedView>
                 ))}
