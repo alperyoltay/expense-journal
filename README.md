@@ -1,3 +1,5 @@
+<p align="center"><img src="finans.png" width="96" alt="Expense Journal logo"></p>
+
 # Expense Journal (Harcamalarım)
 
 Günlük gelir ve giderlerini not defteri gibi tutabileceğin, Expo (React Native) ile yazılmış bir mobil uygulama.
@@ -112,3 +114,7 @@ src/i18n/            Çeviriler / Translations (tr, en)
 src/utils/           Ayrıştırıcı ve sabitler / Parser & constants
 app.json             Expo yapılandırması / Expo config
 ```
+
+## Lisans / License
+
+MIT
