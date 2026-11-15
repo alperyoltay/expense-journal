@@ -1,22 +1,19 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-import { useEffect } from 'react';
 import { initDB } from '@/src/db/DB';
+import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
-
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as Updates from 'expo-updates';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useState } from 'react';
-import { LanguageProvider, useLanguage } from '@/src/i18n/LanguageContext';
 
 function UpdateBanner() {
   const { t } = useLanguage();
@@ -64,7 +61,6 @@ export default function RootLayout() {
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
           <StatusBar style="auto" />
 

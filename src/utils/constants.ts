@@ -6,7 +6,7 @@ export enum TransactionType {
 export const DB_NAME = 'harcamalarim.db';
 
 export const PATTERNS = {
-  TRANSACTION_REGEX: /(?:(\d{2}:\d{2})\s+)?#(gider|gelir)\s+(\d+(?:\.\d+)?)(?:\s+([^\n]*))?/gi,
+  TRANSACTION_REGEX: /(?:(\d{2}:\d{2})\s+)?#(gider|gelir)\s+(\d+(?:[.,]\d+)?)(?:\s+([^\n]*))?/gi,
 };
 
 export const UI_COLORS = {

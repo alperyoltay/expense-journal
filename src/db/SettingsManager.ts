@@ -43,7 +43,7 @@ const getSettings = async () => {
     if (!info.exists) return {};
     const content = await FileSystem.readAsStringAsync(SETTINGS_FILE);
     return JSON.parse(content);
-  } catch (e) {
+  } catch {
     return {};
   }
 };

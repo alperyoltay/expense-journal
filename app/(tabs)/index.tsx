@@ -48,7 +48,6 @@ export default function MasterPagerScreen() {
   const [year, month, day] = todayFull.split('-');
   const displayDate = `${day}.${month}.${year}`;
 
-  const [monthData, setMonthData] = useState<TransactionRecord[]>([]);
   const [tagSummaryData, setTagSummaryData] = useState<TagSummary[]>([]);
   const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
   const [allHistory, setAllHistory] = useState<MonthSummary[]>([]);
@@ -68,7 +67,6 @@ export default function MasterPagerScreen() {
     }
     
     const txs = await getTransactionsByMonth(monthStr);
-    setMonthData(txs);
     let inc = 0, exp = 0;
     const tagMap: Record<string, { income: number; expense: number }> = {};
 

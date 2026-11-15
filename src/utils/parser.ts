@@ -1,4 +1,4 @@
-import { TransactionRecord } from '@/src/db/DB';
+import type { TransactionRecord } from '@/src/db/DB';
 import { PATTERNS, TransactionType } from '@/src/utils/constants';
 
 export const parseTransactions = (content: string): Omit<TransactionRecord, 'id' | 'note_id' | 'dateStr'>[] => {
@@ -9,8 +9,8 @@ export const parseTransactions = (content: string): Omit<TransactionRecord, 'id'
     const [, time, type, amount, description] = match;
     transactions.push({
       time: time || undefined,
-      type: type as TransactionType,
-      amount: parseFloat(amount),
+      type: type.toLowerCase() as TransactionType,
+      amount: parseFloat(amount.replace(',', '.')),
       description: (description || '').trim(),
     });
   }

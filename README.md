@@ -2,6 +2,8 @@
 
 # Expense Journal (Harcamalarım)
 
+[![CI](https://github.com/lprvy/expense-journal/actions/workflows/ci.yml/badge.svg)](https://github.com/lprvy/expense-journal/actions/workflows/ci.yml)
+
 Günlük gelir ve giderlerini not defteri gibi tutabileceğin, Expo (React Native) ile yazılmış bir mobil uygulama.
 A notebook-style daily income and expense tracker built with Expo (React Native).
 
@@ -54,7 +56,7 @@ Derleme bitince EAS bir indirme bağlantısı verir.
 ### Kullanım
 - Miktarı ve açıklamayı yaz, **+ GELİR** veya **- GİDER** butonuna bas.
 - Açıklamaya `#market` gibi etiket ekleyerek harcamalarını grupla.
-- Not alanına doğrudan `#gider 150 #market ekmek` biçiminde de yazabilirsin.
+- Not alanına doğrudan `#gider 150 #market ekmek` biçiminde de yazabilirsin. Kuruşlu tutarlar için virgül ya da nokta kullanabilirsin: `#gider 150,75`.
 - Özet, geçmiş aylar ve ayarlar sayfalarına alttaki menüden ya da sağa/sola kaydırarak geç.
 
 ---
@@ -101,10 +103,18 @@ When the build finishes, EAS gives you a download link.
 ### Usage
 - Enter an amount and a description, then tap **+ INCOME** or **- EXPENSE**.
 - Add tags like `#market` to the description to group your spending.
-- You can also type straight into the note area, e.g. `#gider 150 #market bread` (`#gelir` = income, `#gider` = expense).
+- You can also type straight into the note area, e.g. `#gider 150 #market bread` (`#gelir` = income, `#gider` = expense). Decimals work with a comma or a dot: `#gider 150,75`.
 - Switch between the summary, past months and settings pages from the bottom bar or by swiping.
 
 ---
+
+## Geliştirme / Development
+```bash
+npm run lint       # ESLint
+npm run typecheck  # TypeScript
+npm test           # Jest: not ayrıştırıcı testleri / note parser tests
+```
+Her push'ta GitHub Actions bu üç adımı çalıştırır. / GitHub Actions runs all three on every push.
 
 ## Proje Yapısı / Project Structure
 ```
@@ -112,6 +122,7 @@ app/                 Ekranlar / Screens (expo-router)
 src/db/              Not ve ayar kayıtları / Notes & settings storage
 src/i18n/            Çeviriler / Translations (tr, en)
 src/utils/           Ayrıştırıcı ve sabitler / Parser & constants
+tests/               Jest testleri / Jest tests
 app.json             Expo yapılandırması / Expo config
 ```
 
