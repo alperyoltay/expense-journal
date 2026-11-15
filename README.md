@@ -9,6 +9,18 @@ A notebook-style daily income and expense tracker built with Expo (React Native)
 
 **Diller / Languages:** Türkçe, English (Ayarlar → Dil / Settings → Language)
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/journal.png" width="220" alt="Günlük: bugünün işlemleri, etiketler ve not alanı / Journal: today's entries, tags and the note area"><br><sub>Günlük / Journal</sub></td>
+    <td align="center"><img src="docs/screenshots/summary.png" width="220" alt="Özet: aylık bakiye, gelir, gider ve etiketlere göre dağılım / Summary: monthly balance, income, expenses and a breakdown by tag"><br><sub>Özet / Summary</sub></td>
+    <td align="center"><img src="docs/screenshots/history.png" width="220" alt="Geçmiş aylar: her ayın toplamları ve etiket dağılımı / Past months: totals and tag breakdown per month"><br><sub>Geçmiş / History</sub></td>
+  </tr>
+</table>
+
+<sub>Web sürümünden, örnek verilerle alınmış ekran görüntüleri. / Screenshots from the web build with sample data.</sub>
+
+**Platformlar / Platforms:** Android, iOS ve web. Telefonda notlar uygulama klasöründe dosya olarak, web'de tarayıcının `localStorage`'ında tutulur. / On phones notes are files in the app folder; on the web they live in the browser's `localStorage`.
+
 - [Türkçe Kurulum](#türkçe-kurulum)
 - [English Setup](#english-setup)
 
@@ -112,7 +124,7 @@ When the build finishes, EAS gives you a download link.
 ```bash
 npm run lint       # ESLint
 npm run typecheck  # TypeScript
-npm test           # Jest: not ayrıştırıcı testleri / note parser tests
+npm test           # Jest: ayrıştırıcı ve kayıt testleri / parser and storage tests
 ```
 Her push'ta GitHub Actions bu üç adımı çalıştırır. / GitHub Actions runs all three on every push.
 
@@ -120,6 +132,7 @@ Her push'ta GitHub Actions bu üç adımı çalıştırır. / GitHub Actions run
 ```
 app/                 Ekranlar / Screens (expo-router)
 src/db/              Not ve ayar kayıtları / Notes & settings storage
+                     (storage.ts: dosya / files · storage.web.ts: localStorage)
 src/i18n/            Çeviriler / Translations (tr, en)
 src/utils/           Ayrıştırıcı ve sabitler / Parser & constants
 tests/               Jest testleri / Jest tests

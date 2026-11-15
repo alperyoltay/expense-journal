@@ -1,6 +1,6 @@
-import * as FileSystem from 'expo-file-system';
+import { readText, writeText } from './storage';
 
-const SETTINGS_FILE = `${FileSystem.documentDirectory}settings.json`;
+const SETTINGS_FILE = 'settings.json';
 
 const DEFAULT_LABELS = ['market', 'yemek', 'fatura', 'kira', 'maas', 'eglence', 'ulasim', 'diger'];
 
@@ -39,10 +39,8 @@ export const getLanguage = async (): Promise<string | undefined> => {
 
 const getSettings = async () => {
   try {
-    const info = await FileSystem.getInfoAsync(SETTINGS_FILE);
-    if (!info.exists) return {};
-    const content = await FileSystem.readAsStringAsync(SETTINGS_FILE);
-    return JSON.parse(content);
+    const content = await readText(SETTINGS_FILE);
+    return content ? JSON.parse(content) : {};
   } catch {
     return {};
   }
@@ -50,7 +48,7 @@ const getSettings = async () => {
 
 const saveSettings = async (settings: any) => {
   try {
-    await FileSystem.writeAsStringAsync(SETTINGS_FILE, JSON.stringify(settings));
+    await writeText(SETTINGS_FILE, JSON.stringify(settings));
   } catch (e) {
     console.error('Ayarlar kaydedilemedi:', e);
   }
