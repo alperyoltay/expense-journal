@@ -124,7 +124,7 @@ When the build finishes, EAS gives you a download link.
 ```bash
 npm run lint       # ESLint
 npm run typecheck  # TypeScript
-npm test           # Jest: ayrıştırıcı ve kayıt testleri / parser and storage tests
+npm test           # Jest: ayrıştırıcı, kayıt ve çeviri testleri / parser, storage and translation tests
 ```
 Her push'ta GitHub Actions bu üç adımı çalıştırır. / GitHub Actions runs all three on every push.
 
